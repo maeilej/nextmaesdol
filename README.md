@@ -1,0 +1,2 @@
+# nextmaesdol
+AI - CV project
