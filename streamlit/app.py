@@ -6,9 +6,6 @@ from views.dashboard_page import display_dashboard_page
 from views.admin_page import display_admin_page
 from auth.authentication import require_login
 
-# 페이지 설정
-# st.set_page_config(page_title="NXTmaesdol", page_icon="⚠️", layout="wide")
-
 # 선택한 메뉴에 따라 다른 페이지 표시
 selected_menu = display_sidebar_menu()  # 선택된 메뉴를 반환받습니다.
 
