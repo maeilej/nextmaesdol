@@ -61,6 +61,20 @@ st.markdown("""
 def main():
     st.title("📊 두부 품질 모니터링 시스템")
     
+    # 5. 간단한 제어 패널
+    with st.sidebar:
+        st.header("⚙️ 모니터링 설정")
+        st.toggle("자동 새로고침", value=True)
+        st.slider("새로고침 주기(초)", 5, 60, 30)
+        selected_items = st.multiselect(
+            "모니터링 항목",
+            ["모서리", "패임", "기포", "이물"],  # 순서 변경
+            ["모서리", "패임", "기포", "이물"]   # 순서 변경
+        )
+        
+        st.divider()
+        st.caption(f"마지막 업데이트: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
     # 1. 현재 상태 개요
     st.markdown('<p class="header-style">현재 생산 상태</p>', unsafe_allow_html=True)
     
@@ -150,57 +164,52 @@ def main():
     # 3. 불량 유형 분석
     st.markdown('<p class="header-style">🔍 불량 유형 분석</p>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns(2)
+    # 파이 차트 데이터 업데이트 - 순서와 값을 이미지와 동일하게 수정
+    defect_data = {
+        "모서리": 0.45,  # 45%
+        "패임": 0.30,    # 30%
+        "기포": 0.15,    # 15%
+        "이물": 0.10     # 10%
+    }
     
-    with col1:
-        # 간단한 파이 차트
-        labels = ['모양 불량', '크기 이상', '색상 불량', '기타']
-        values = [45, 30, 15, 10]
-        
-        fig = go.Figure(data=[go.Pie(
-            labels=labels,
-            values=values,
-            hole=.3,
-            marker_colors=['#1976D2', '#64B5F6', '#90CAF9', '#BBDEFB']
-        )])
-        
-        fig.update_layout(
-            title='불량 유형 비율',
-            height=400
+    # 모든 데이터를 파이 차트에 표시
+    values = list(defect_data.values())
+    
+    fig = go.Figure(data=[go.Pie(
+        labels=list(defect_data.keys()),
+        values=values,
+        hole=.3,
+        marker_colors=['#1976D2', '#64B5F6', '#90CAF9', '#BBDEFB'],
+        textfont_size=14,
+        marker=dict(line=dict(color='#FFFFFF', width=2))
+    )])
+    
+    fig.update_layout(
+        title={
+            'text': '불량 유형 비율',
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'font': {'size': 24}
+        },
+        height=1000,
+        width=1200,
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.1,
+            xanchor="center",
+            x=0.5
         )
-        
-        st.plotly_chart(fig, use_container_width=True)
+    )
     
-    with col2:
-        # 간단한 막대 차트
-        st.markdown("""
-        <div style="background-color: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            <h3>📊 주요 불량 현황</h3>
-        """, unsafe_allow_html=True)
-        
-        defect_types = {
-            '모양 불량': 45,
-            '크기 이상': 30,
-            '색상 불량': 15,
-            '기타': 10
-        }
-        
-        for defect, count in defect_types.items():
-            percentage = count
-            st.markdown(f"""
-            <div style="margin: 10px 0;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                    <span>{defect}</span>
-                    <span>{percentage}%</span>
-                </div>
-                <div style="background-color: #E3F2FD; border-radius: 5px;">
-                    <div style="width: {percentage}%; background-color: #1976D2; height: 20px; border-radius: 5px;">
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown("</div>", unsafe_allow_html=True)
+    # container를 사용하여 차트를 중앙에 배치
+    with st.container():
+        col1, col2, col3 = st.columns([1,3,1])
+        with col2:
+            st.plotly_chart(fig, use_container_width=True)
     
     # 4. 품질 예측 알림
     st.markdown('<p class="header-style">⚠️ 품질 예측 알림</p>', unsafe_allow_html=True)
@@ -209,31 +218,21 @@ def main():
     if quality_score >= 90:
         st.success("✅ 현재 모든 품질 지표가 정상 범위 내에 있습니다!")
     elif quality_score >= 80:
-        st.warning("""
-        ⚠️ 주의가 필요한 항목이 있습니다:
-        - 모양 품질 지수가 기준보다 조금 낮습니다
-        - 크기 편차가 증가하는 추세입니다
-        """)
+        warning_items = [item for item in selected_items if defect_data[item] > 0.5]
+        if warning_items:
+            warning_msg = "\n".join([f"- {item} 발생률이 기준보다 높습니다" for item in warning_items])
+            st.warning(f"""
+            ⚠️ 주의가 필요한 항목이 있습니다:
+            {warning_msg}
+            """)
+        else:
+            st.warning("⚠️ 일부 품질 지표가 주의 수준입니다.")
     else:
         st.error("""
         🚨 긴급 확인이 필요합니다:
         - 품질 점수가 위험 수준입니다
         - 즉시 생산 라인 점검이 필요합니다
         """)
-    
-    # 5. 간단한 제어 패널
-    with st.sidebar:
-        st.header("⚙️ 모니터링 설정")
-        st.toggle("자동 새로고침", value=True)
-        st.slider("새로고침 주기(초)", 5, 60, 30)
-        st.multiselect(
-            "모니터링 항목",
-            ["모양", "크기", "색상", "밀도"],
-            ["모양", "크기", "색상"]
-        )
-        
-        st.divider()
-        st.caption(f"마지막 업데이트: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 if __name__ == "__main__":
     main()

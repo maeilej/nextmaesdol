@@ -75,7 +75,7 @@ def generate_sample_logs():
     return logs
 
 def main():
-    st.title("👨‍💼 관리자 로그 관리 시스템")
+    st.title("관리자 로그 관리 시스템")
     
     # 1. 로그 필터링 섹션
     with st.expander("🔍 로그 필터 설정", expanded=True):

@@ -60,8 +60,15 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+def get_inspection_image():
+    # 이미지를 grayscale로 읽기
+    img = cv2.imread('tofuimage.png', cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        return None
+    return img
+
 def main():
-    st.title("두부 품질 검사 시스템 🧊")
+    st.title("두부 품질 검사 시스템")
     
     # 사이드바 - 검사 설정
     with st.sidebar:
@@ -87,7 +94,12 @@ def main():
         # 이미지 표시 영역
         placeholder = st.empty()
         with placeholder.container():
-            st.image("https://via.placeholder.com/640x480", caption="실시간 검사 영상")
+            # 실제 검사 이미지 표시
+            inspection_image = get_inspection_image()
+            if inspection_image is not None:
+                st.image(inspection_image, caption="실시간 검사 영상", use_column_width=True)
+            else:
+                st.error("이미지를 불러올 수 없습니다.")
         
         # 컨트롤 버튼들
         col1_1, col1_2, col1_3 = st.columns(3)
@@ -122,11 +134,10 @@ def main():
         
         # 진행 바로 각 지표 표시
         metrics = {
-            "모양": 0.95,
-            "크기": 0.98,
-            "색상": 0.92,
-            "표면": 0.89,
-            "밀도": 0.94
+            "패임": 0.65,
+            "모서리": 0.55,
+            "기포": 0.45,
+            "이물질": 0.25
         }
         
         for name, value in metrics.items():
